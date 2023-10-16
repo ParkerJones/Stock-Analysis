@@ -32,6 +32,12 @@
     <ClInclude Include="Candlestick.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FormDataGridView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FormHelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CppCLR_WinFormsProject.cpp">
@@ -47,6 +53,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Candlestick.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FormDataGridView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FormHelp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
