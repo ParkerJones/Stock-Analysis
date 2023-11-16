@@ -4,7 +4,6 @@
 #include <fstream>
 #include <string>
 #include <cliext/vector>
-#include "FormDataGridView.h"
 #include "FormHelp.h"
 
 namespace Stock_Analysis {
@@ -20,7 +19,6 @@ namespace Stock_Analysis {
 	public ref class FormChart : public System::Windows::Forms::Form
 	{
 		// Instantiate other forms so they exist but are not displayed
-		FormDataGridView^ formDGV = gcnew FormDataGridView();
 		FormHelp^ formHelp = gcnew FormHelp();
 	public:
 		FormChart(void)
@@ -359,30 +357,6 @@ namespace Stock_Analysis {
 
 	}
 	
-	/// <summary>
-	/// Updates DataGridView
-	/// </summary>
-	/// <param name="filteredCandlesticks">Candlesticks to be diplayed</param>
-	protected: void UpdateDataGridView(cliext::vector<Candlestick^> filteredCandlesticks) {
-
-		// Clear rows
-		formDGV->dgvStock->Rows->Clear();
-
-		// Add rows
-		if (formDGV->dgvStock->ColumnCount != 0) {
-			for (int i = 0; i < filteredCandlesticks.size(); ++i)
-			{
-				formDGV->dgvStock->Rows->Add(
-					filteredCandlesticks[i]->date->Year.ToString() + "/" + String::Format("{0:00}", filteredCandlesticks[i]->date->Month) + "/" + String::Format("{0:00}", filteredCandlesticks[i]->date->Day),
-					Math::Round(filteredCandlesticks[i]->open, 3),
-					Math::Round(filteredCandlesticks[i]->close, 3),
-					Math::Round(filteredCandlesticks[i]->high, 3),
-					Math::Round(filteredCandlesticks[i]->low, 3),
-					filteredCandlesticks[i]->volume);
-			}
-		}
-	}
-
 	private: System::Void buttonOpenFile_Click(System::Object^ sender, System::EventArgs^ e) {
 		// Create OpenFileDialog
 		OpenFileDialog^ ofd = gcnew OpenFileDialog();
@@ -404,7 +378,6 @@ namespace Stock_Analysis {
 				// Load stock data
 				// CHART SHOULD ALSO UPDATE
 				DisplayStockData(FilterStockData(GetStockData(tickerData)), interval);
-				UpdateDataGridView(FilterStockData(GetStockData(tickerData)));
 			} else {
 				// Show "That file doesn't exist." message if the file does not exist
 				MessageBox::Show("That file doesn't exist.", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -424,21 +397,13 @@ private: System::Void checkBoxVolume_CheckedChanged(System::Object^ sender, Syst
 }
 private: System::Void dtpStart_ValueChanged(System::Object^ sender, System::EventArgs^ e) {
 	DisplayStockData(FilterStockData(currentCandlesticksFromFile), gInterval);
-	UpdateDataGridView(filteredCandlesticksFromFile);
 }
 private: System::Void dtpEnd_ValueChanged(System::Object^ sender, System::EventArgs^ e) {
 	DisplayStockData(FilterStockData(currentCandlesticksFromFile), gInterval);
-	UpdateDataGridView(filteredCandlesticksFromFile);
 }
 private: System::Void buttonDataGridView_Click(System::Object^ sender, System::EventArgs^ e) {
 	// Close datagrid view form if already open
-	if (formDGV->Visible) {
-		formDGV->Close();
-	}
 	// Open datagrid view form
-	formDGV = gcnew FormDataGridView();
-	formDGV->Show();
-	UpdateDataGridView(filteredCandlesticksFromFile);
 }
 private: System::Void buttonHelp_Click(System::Object^ sender, System::EventArgs^ e) {
 	// Close about form if already open
