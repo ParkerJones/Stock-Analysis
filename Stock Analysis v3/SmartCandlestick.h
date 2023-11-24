@@ -20,20 +20,6 @@ public:
 	double topTail;
 	double bottomTail;
 
-	// Array of detectable pattern names
-	static array<String^>^ Patterns = gcnew array<String^> {
-		"All Doji",
-		"Neutral Doji",
-		"Dragonfly Doji",
-		"Gravestone Doji",
-		"All Hammers",
-		"Upright Hammers",
-		"Inverted Hammers",
-		"All Marubozu",
-		"White Marubozu",
-		"Black Marubozu"
-	};
-
 	SmartCandlestick() {
 		topPrice = (isBullish()) ? close : open;
 		bottomPrice = (isBullish()) ? open : close;

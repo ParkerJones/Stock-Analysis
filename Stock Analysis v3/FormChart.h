@@ -5,6 +5,23 @@
 #include <string>
 #include <cliext/vector>
 #include "SmartCandlestick.h"
+#include "Recognizer.h"
+#include "Recognizer_AllDoji.h"
+#include "Recognizer_NeutralDoji.h"
+#include "Recognizer_DragonflyDoji.h"
+#include "Recognizer_GravestoneDoji.h"
+#include "Recognizer_AllHammers.h"
+#include "Recognizer_UprightHammers.h"
+#include "Recognizer_InvertedHammers.h"
+#include "Recognizer_AllMarubozu.h"
+#include "Recognizer_WhiteMarubozu.h"
+#include "Recognizer_BlackMarubozu.h"
+#include "Recognizer_BullishEngulfing.h"
+#include "Recognizer_BearishEngulfing.h"
+#include "Recognizer_BullishHarami.h"
+#include "Recognizer_BearishHarami.h"
+#include "Recognizer_Peak.h"
+#include "Recognizer_Valley.h"
 
 namespace Stock_Analysis_v3 {
 
@@ -28,8 +45,29 @@ namespace Stock_Analysis_v3 {
 			InitializeComponent();
 			DisplayStockData(FilterStockData(GetStockData(stockData)), interval);
 
+			// Add recognizers
+			recognizers->Add(gcnew Recognizer_AllDoji());
+			recognizers->Add(gcnew Recognizer_NeutralDoji());
+			recognizers->Add(gcnew Recognizer_DragonflyDoji());
+			recognizers->Add(gcnew Recognizer_GravestoneDoji());
+			recognizers->Add(gcnew Recognizer_AllHammers());
+			recognizers->Add(gcnew Recognizer_UprightHammers());
+			recognizers->Add(gcnew Recognizer_InvertedHammers());
+			recognizers->Add(gcnew Recognizer_AllMarubozu());
+			recognizers->Add(gcnew Recognizer_WhiteMarubozu());
+			recognizers->Add(gcnew Recognizer_BlackMarubozu());
+			recognizers->Add(gcnew Recognizer_BullishEngulfing());
+			recognizers->Add(gcnew Recognizer_BearishEngulfing());
+			recognizers->Add(gcnew Recognizer_BullishHarami());
+			recognizers->Add(gcnew Recognizer_BearishHarami());
+			recognizers->Add(gcnew Recognizer_Peak());
+			recognizers->Add(gcnew Recognizer_Valley());
+
 			// Dynamically add pattern types to combo box
-			comboPatterns->Items->AddRange(SmartCandlestick::Patterns);
+			for each (Recognizer^ recognizer in recognizers)
+			{
+				comboPatterns->Items->Add(recognizer->patternName);
+			}
 
 			currentCandlesticksFromFile = GetStockData(stockData);
 			gInterval = interval;
@@ -40,9 +78,6 @@ namespace Stock_Analysis_v3 {
 		{
 			InitializeComponent();
 			DisplayStockData(FilterStockData(GetStockData(stockData)), interval);
-
-			// Dynamically add pattern types to combo box
-			comboPatterns->Items->AddRange(SmartCandlestick::Patterns);
 
 			// Set DateTime Pickers
 			dtpStart->Value = start;
@@ -234,6 +269,7 @@ namespace Stock_Analysis_v3 {
 	public: cliext::vector<Candlestick^> currentCandlesticksFromFile; // Currently selected candlesticks
 	public: cliext::vector<Candlestick^> filteredCandlesticksFromFile; // Currently selected candlesticks congruent with selected DateTimes
 	public: String^ gInterval; // Time interval of currently selected candlesticks
+	public: List<Recognizer^>^ recognizers = gcnew List<Recognizer^>();
 
 	/// <summary>
 	/// Returns a vector of Candlestick objects given data in a .csv file
@@ -307,7 +343,7 @@ namespace Stock_Analysis_v3 {
 		chartStock->Series["seriesVolume"]->Points->Clear();
 
 		double highestPrice = 0;
-		double lowestPrice = 99999;
+		double lowestPrice = double::MaxValue;
 		long highestVolume = 0;
 		long lowestVolume = long::MaxValue;
 
@@ -362,9 +398,20 @@ namespace Stock_Analysis_v3 {
 	/// Annotates points on chartStock series given a detectable pattern
 	/// </summary>
 	/// <param name="pattern">Pattern to detect</param>
-	protected: void AnnotatePatterns(String^ pattern) {
+	protected: void AnnotatePatterns() {
 		chartStock->Annotations->Clear();
 
+		List<SmartCandlestick^>^ smartCandlesticks = gcnew List<SmartCandlestick^>();
+
+		for each (Candlestick ^ candlestick in filteredCandlesticksFromFile)
+		{
+			smartCandlesticks->Add(gcnew SmartCandlestick(candlestick));
+		}
+		if (comboPatterns->SelectedIndex > -1) {
+			AddAnnotations(recognizers[comboPatterns->SelectedIndex]->Recognize(smartCandlesticks));
+		}
+
+		/*
 		for (int i = 0; i < chartStock->Series["seriesPrice"]->Points->Count; ++i) {
 
 			SmartCandlestick^ currentCandlestick = gcnew SmartCandlestick(filteredCandlesticksFromFile[i]);
@@ -542,16 +589,40 @@ namespace Stock_Analysis_v3 {
 				chartStock->Annotations->Add(annotation);
 			}
 		}
+		*/
+	}
+
+	private: void AddAnnotations(List<int>^ indexes) {
+
+		for (int i = 0; i < indexes->Count; ++i) {
+			DataPoint^ point = chartStock->Series["seriesPrice"]->Points[indexes[i]];
+			ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
+			annotation->AnchorDataPoint = point;
+			annotation->AnchorX = point->XValue;
+			annotation->AnchorY = point->YValues[0];
+
+			annotation->ArrowStyle = ArrowStyle::Simple;
+			annotation->Width = .001;
+			annotation->Height = 5;
+			annotation->LineWidth = 1;
+			annotation->ArrowSize = 2;
+			annotation->LineColor = Color::Black;
+
+			annotation->BackColor = Color::Blue;
+
+			chartStock->Annotations->Add(annotation);
+		}
 	}
 
 	private: System::Void comboPatterns_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e) {
-		AnnotatePatterns(comboPatterns->Text);
+		AnnotatePatterns();
 	}
 
 	private: System::Void checkBoxPatterns_CheckedChanged(System::Object^ sender, System::EventArgs^ e) {
 		if (checkBoxPatterns->Checked) {
 			comboPatterns->Enabled = true;
-			AnnotatePatterns(comboPatterns->Text);
+			AnnotatePatterns();
+			
 		}
 		else {
 			comboPatterns->Enabled = false;
@@ -572,7 +643,7 @@ namespace Stock_Analysis_v3 {
 		DisplayStockData(FilterStockData((currentCandlesticksFromFile)), gInterval);
 		if (checkBoxPatterns->Checked) {
 			comboPatterns->Enabled = true;
-			AnnotatePatterns(comboPatterns->Text);
+			AnnotatePatterns();
 		}
 		else {
 			comboPatterns->Enabled = false;
@@ -584,7 +655,7 @@ namespace Stock_Analysis_v3 {
 		DisplayStockData(FilterStockData((currentCandlesticksFromFile)), gInterval);
 		if (checkBoxPatterns->Checked) {
 			comboPatterns->Enabled = true;
-			AnnotatePatterns(comboPatterns->Text);
+			AnnotatePatterns();
 		}
 		else {
 			comboPatterns->Enabled = false;

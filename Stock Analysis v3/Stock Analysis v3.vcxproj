@@ -141,6 +141,23 @@
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Recognizer.h" />
+    <ClInclude Include="Recognizer_AllDoji.h" />
+    <ClInclude Include="Recognizer_AllHammers.h" />
+    <ClInclude Include="Recognizer_AllMarubozu.h" />
+    <ClInclude Include="Recognizer_BearishEngulfing.h" />
+    <ClInclude Include="Recognizer_BearishHarami.h" />
+    <ClInclude Include="Recognizer_BlackMarubozu.h" />
+    <ClInclude Include="Recognizer_BullishEngulfing.h" />
+    <ClInclude Include="Recognizer_BullishHarami.h" />
+    <ClInclude Include="Recognizer_DragonflyDoji.h" />
+    <ClInclude Include="Recognizer_GravestoneDoji.h" />
+    <ClInclude Include="Recognizer_InvertedHammers.h" />
+    <ClInclude Include="Recognizer_NeutralDoji.h" />
+    <ClInclude Include="Recognizer_Peak.h" />
+    <ClInclude Include="Recognizer_UprightHammers.h" />
+    <ClInclude Include="Recognizer_Valley.h" />
+    <ClInclude Include="Recognizer_WhiteMarubozu.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SmartCandlestick.h" />
   </ItemGroup>
@@ -156,6 +173,23 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Recognizer.cpp" />
+    <ClCompile Include="Recognizer_AllDoji.cpp" />
+    <ClCompile Include="Recognizer_AllHammers.cpp" />
+    <ClCompile Include="Recognizer_AllMarubozu.cpp" />
+    <ClCompile Include="Recognizer_BearishEngulfing.cpp" />
+    <ClCompile Include="Recognizer_BearishHarami.cpp" />
+    <ClCompile Include="Recognizer_BlackMarubozu.cpp" />
+    <ClCompile Include="Recognizer_BullishEngulfing.cpp" />
+    <ClCompile Include="Recognizer_BullishHarami.cpp" />
+    <ClCompile Include="Recognizer_DragonflyDoji.cpp" />
+    <ClCompile Include="Recognizer_GravestoneDoji.cpp" />
+    <ClCompile Include="Recognizer_InvertedHammers.cpp" />
+    <ClCompile Include="Recognizer_NeutralDoji.cpp" />
+    <ClCompile Include="Recognizer_Peak.cpp" />
+    <ClCompile Include="Recognizer_UprightHammers.cpp" />
+    <ClCompile Include="Recognizer_Valley.cpp" />
+    <ClCompile Include="Recognizer_WhiteMarubozu.cpp" />
     <ClCompile Include="SmartCandlestick.cpp" />
   </ItemGroup>
   <ItemGroup>
