@@ -1,6 +1,6 @@
 # Stock-Analysis
 
-Stock-Analysis is a .NET Forms application designed for analyzing stock data from Yahoo Finance in the form of .csv files. It provides the ability to select multiple files, generate candlestick and volume charts, and annotate specific candlestick patterns such as Doji, Marubozu, and Hammers on the charts.
+Stock-Analysis is a .NET Forms application designed for analyzing stock data from Yahoo Finance in the form of .csv files. It is written using C++/CLI, a modification to C++ that allows use with .NET. It provides the ability to select multiple files, generate candlestick and volume charts, and annotate specific candlestick patterns such as Doji, Marubozu, and Hammers on the charts.
 
 ## Table of Contents
 
