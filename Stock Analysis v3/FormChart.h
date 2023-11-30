@@ -3,7 +3,6 @@
 #include "Candlestick.h"
 #include <fstream>
 #include <string>
-#include <cliext/vector>
 #include "SmartCandlestick.h"
 #include "Recognizer.h"
 #include "Recognizer_AllDoji.h"
@@ -43,25 +42,9 @@ namespace Stock_Analysis_v3 {
 		FormChart(array<String^>^ stockData, String^ interval)
 		{
 			InitializeComponent();
-			DisplayStockData(FilterStockData(GetStockData(stockData)), interval);
 
-			// Add recognizers
-			recognizers->Add(gcnew Recognizer_AllDoji());
-			recognizers->Add(gcnew Recognizer_NeutralDoji());
-			recognizers->Add(gcnew Recognizer_DragonflyDoji());
-			recognizers->Add(gcnew Recognizer_GravestoneDoji());
-			recognizers->Add(gcnew Recognizer_AllHammers());
-			recognizers->Add(gcnew Recognizer_UprightHammers());
-			recognizers->Add(gcnew Recognizer_InvertedHammers());
-			recognizers->Add(gcnew Recognizer_AllMarubozu());
-			recognizers->Add(gcnew Recognizer_WhiteMarubozu());
-			recognizers->Add(gcnew Recognizer_BlackMarubozu());
-			recognizers->Add(gcnew Recognizer_BullishEngulfing());
-			recognizers->Add(gcnew Recognizer_BearishEngulfing());
-			recognizers->Add(gcnew Recognizer_BullishHarami());
-			recognizers->Add(gcnew Recognizer_BearishHarami());
-			recognizers->Add(gcnew Recognizer_Peak());
-			recognizers->Add(gcnew Recognizer_Valley());
+			DisplayStockData(FilterStockData(GetStockData(stockData)), interval);
+			InitializeRecognizers();
 
 			// Dynamically add pattern types to combo box
 			for each (Recognizer^ recognizer in recognizers)
@@ -70,7 +53,7 @@ namespace Stock_Analysis_v3 {
 			}
 
 			currentCandlesticksFromFile = GetStockData(stockData);
-			gInterval = interval;
+			interval = interval;
 		}
 
 		// Constructor used when timeframe is specified
@@ -84,7 +67,7 @@ namespace Stock_Analysis_v3 {
 			dtpEnd->Value = end;
 
 			currentCandlesticksFromFile = GetStockData(stockData);
-			gInterval = interval;
+			interval = interval;
 		}
 
 	protected:
@@ -234,10 +217,16 @@ namespace Stock_Analysis_v3 {
 			series1->Color = System::Drawing::Color::Black;
 			series1->CustomProperties = L"PriceDownColor=Red, PriceUpColor=Green";
 			series1->Name = L"seriesPrice";
+			series1->XValueMember = L"date";
+			series1->XValueType = System::Windows::Forms::DataVisualization::Charting::ChartValueType::DateTime;
+			series1->YValueMembers = L"low,high,open,close";
 			series1->YValuesPerPoint = 4;
 			series2->ChartArea = L"chartAreaVolume";
 			series2->Color = System::Drawing::Color::Gray;
 			series2->Name = L"seriesVolume";
+			series2->XValueMember = L"date";
+			series2->XValueType = System::Windows::Forms::DataVisualization::Charting::ChartValueType::DateTime;
+			series2->YValueMembers = L"volume";
 			this->chartStock->Series->Add(series1);
 			this->chartStock->Series->Add(series2);
 			this->chartStock->Size = System::Drawing::Size(884, 427);
@@ -266,23 +255,22 @@ namespace Stock_Analysis_v3 {
 		}
 #pragma endregion
 
-	public: cliext::vector<Candlestick^> currentCandlesticksFromFile; // Currently selected candlesticks
-	public: cliext::vector<Candlestick^> filteredCandlesticksFromFile; // Currently selected candlesticks congruent with selected DateTimes
-	public: String^ gInterval; // Time interval of currently selected candlesticks
+	public: List<Candlestick^>^ currentCandlesticksFromFile = gcnew List<Candlestick^>(); // Currently selected candlesticks
+	public: List<Candlestick^>^ filteredCandlesticksFromFile = gcnew List<Candlestick^>(); // Currently selected candlesticks congruent with selected DateTimes
+	public: String^ interval; // Time interval of currently selected candlesticks
 	public: List<Recognizer^>^ recognizers = gcnew List<Recognizer^>();
 
 	/// <summary>
-	/// Returns a vector of Candlestick objects given data in a .csv file
+	/// Returns a list of Candlestick objects given data in a .csv file
 	/// </summary>
 	/// <param name="data">Candlestick data from .csv file</param>
-	/// <returns>A vector of Candlesticks</returns>
-	protected: cliext::vector<Candlestick^> GetStockData(array<String^>^ data) {
+	/// <returns>A list of Candlesticks</returns>
+	protected: List<Candlestick^>^ GetStockData(array<String^>^ data) {
 
-		// Initialize Candlestick vector
-		cliext::vector<Candlestick^> allCandlesticks;
+		List<Candlestick^>^ outList = gcnew List<Candlestick^>();
 
-		// Empty master Candlestick vector
-		currentCandlesticksFromFile.clear();
+		// Empty master Candlestick list
+		currentCandlesticksFromFile->Clear();
 
 		for (int i = 1; i < data->Length; ++i)
 		{
@@ -295,41 +283,36 @@ namespace Stock_Analysis_v3 {
 			double close = Double::Parse(data[i]->Split(',')[7]);
 			long volume = Double::Parse(data[i]->Split(',')[8]);
 
-			// Populate candlestick vector
+			// Populate candlestick list
 			Candlestick^ newCandlestick = gcnew Candlestick(date, high, low, open, close, volume);
-			allCandlesticks.push_back(newCandlestick);
-			currentCandlesticksFromFile.push_back(newCandlestick);
+			outList->Add(newCandlestick);
+			currentCandlesticksFromFile->Add(newCandlestick);
 		}
 
-		return allCandlesticks;
+		return outList;
 	}
 
 	/// <summary>
-	/// Filters a vector of Candlestick objects depending on DateTimePicker values
+	/// Filters a list of Candlestick objects depending on DateTimePicker values
 	/// </summary>
-	/// <param name="allCandlesticks">Candlestick vector to be filtered</param>
-	/// <returns>A filtered Candlestick vector</returns>
-	protected: cliext::vector<Candlestick^> FilterStockData(cliext::vector<Candlestick^> allCandlesticks) {
-		// Check if argument vector is empty
-		if (allCandlesticks.empty()) {
-			cliext::vector<Candlestick^> empty;
-			return empty;
-		}
-		else {
-			// Create filtered candlesticks and clear master vector
-			cliext::vector<Candlestick^> displayedCandlesticks;
-			filteredCandlesticksFromFile.clear();
+	/// <param name="allCandlesticks">Candlestick list to be filtered</param>
+	/// <returns>A filtered Candlestick list</returns>
+	protected: List<Candlestick^>^ FilterStockData(List<Candlestick^>^ allCandlesticks) {
+		
+		List<Candlestick^>^ displayedCandlesticks = gcnew List<Candlestick^>();
 
-			// Add candlesticks to filter depending on DateTimePicker values
-			for (int i = 0; i < allCandlesticks.size(); ++i) {
-				if (dtpStart->Value <= DateTime::FromOADate(allCandlesticks[i]->date->ToOADate()) && dtpEnd->Value >= DateTime::FromOADate(allCandlesticks[i]->date->ToOADate())) {
-					displayedCandlesticks.push_back(allCandlesticks[i]);
-					filteredCandlesticksFromFile.push_back(allCandlesticks[i]);
-				}
+		// Clear master filtered Candlesticks list
+		filteredCandlesticksFromFile->Clear();
+
+		// Populate filtered list depending on DateTimePicker values
+		for (int i = 0; i < allCandlesticks->Count; ++i) {
+			if (dtpStart->Value <= DateTime::FromOADate(allCandlesticks[i]->date->ToOADate()) && dtpEnd->Value >= DateTime::FromOADate(allCandlesticks[i]->date->ToOADate())) {
+				displayedCandlesticks->Add(allCandlesticks[i]);
+				filteredCandlesticksFromFile->Add(allCandlesticks[i]);
 			}
-
-			return displayedCandlesticks;
 		}
+
+		return displayedCandlesticks;
 	}
 
 	/// <summary>
@@ -337,7 +320,8 @@ namespace Stock_Analysis_v3 {
 	/// </summary>
 	/// <param name="displayedCandlesticks">Candlesticks to be displayed</param>
 	/// <param name="interval">Time interval represented as a string</param>
-	protected: void DisplayStockData(cliext::vector<Candlestick^> displayedCandlesticks, String^ interval) {
+	protected: void DisplayStockData(List<Candlestick^>^ displayedCandlesticks, String^ interval) {
+		
 		// Clear series
 		chartStock->Series["seriesPrice"]->Points->Clear();
 		chartStock->Series["seriesVolume"]->Points->Clear();
@@ -347,26 +331,21 @@ namespace Stock_Analysis_v3 {
 		long highestVolume = 0;
 		long lowestVolume = long::MaxValue;
 
-		for (int i = 0; i < displayedCandlesticks.size(); ++i) {
+		List<Candlestick^>^ clist = gcnew List<Candlestick^>();
+		for each (Candlestick^ c in displayedCandlesticks)
+		{
+			clist->Add(c);
+		}
+
+		chartStock->DataSource = clist;
+		chartStock->DataBind();
+		
+		for (int i = 0; i < displayedCandlesticks->Count; ++i) {
 			// Decide chart bounds
 			highestPrice = (displayedCandlesticks[i]->high > highestPrice) ? displayedCandlesticks[i]->high : highestPrice;
 			lowestPrice = (displayedCandlesticks[i]->low < lowestPrice) ? displayedCandlesticks[i]->low : lowestPrice;
 			highestVolume = (displayedCandlesticks[i]->volume > highestVolume) ? displayedCandlesticks[i]->volume : highestVolume;
 			lowestVolume = (displayedCandlesticks[i]->volume < lowestVolume) ? displayedCandlesticks[i]->volume : lowestVolume;
-
-			// Add to price series
-			chartStock->Series["seriesPrice"]->Points->AddXY(
-				displayedCandlesticks[i]->date,
-				displayedCandlesticks[i]->low,
-				displayedCandlesticks[i]->high,
-				displayedCandlesticks[i]->open,
-				displayedCandlesticks[i]->close);
-
-			// Add to volume series
-			chartStock->Series["seriesVolume"]->Points->AddXY(
-				displayedCandlesticks[i]->date,
-				displayedCandlesticks[i]->volume
-			);
 		}
 
 		// Assign axis bounds
@@ -410,188 +389,12 @@ namespace Stock_Analysis_v3 {
 		if (comboPatterns->SelectedIndex > -1) {
 			AddAnnotations(recognizers[comboPatterns->SelectedIndex]->Recognize(smartCandlesticks));
 		}
-
-		/*
-		for (int i = 0; i < chartStock->Series["seriesPrice"]->Points->Count; ++i) {
-
-			SmartCandlestick^ currentCandlestick = gcnew SmartCandlestick(filteredCandlesticksFromFile[i]);
-			DataPoint^ point = chartStock->Series["seriesPrice"]->Points[i];
-
-			// FIX THIS: add method for creating/adding annotation
-			if (pattern == "All Doji" && currentCandlestick->isDoji()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "Neutral Doji" && currentCandlestick->isNeutralDoji()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "Dragonfly Doji" && currentCandlestick->isDragonflyDoji()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "Gravestone Doji" && currentCandlestick->isGravestoneDoji()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "All Hammers" && (currentCandlestick->isHammerUpright() || currentCandlestick->isHammerInverted())) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "Upright Hammers" && currentCandlestick->isHammerUpright()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "Inverted Hammers" && currentCandlestick->isHammerInverted()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "All Marubozu" && currentCandlestick->isMarubozu()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "White Marubozu" && currentCandlestick->isMarubozu() && currentCandlestick->isBullish()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-			else if (pattern == "Black Marubozu" && currentCandlestick->isMarubozu() && currentCandlestick->isBearish()) {
-				ArrowAnnotation^ annotation = gcnew ArrowAnnotation;
-				annotation->AnchorDataPoint = point;
-				annotation->AnchorX = point->XValue;
-				annotation->AnchorY = point->YValues[0];
-
-				annotation->ArrowStyle = ArrowStyle::Simple;
-				annotation->Width = .001;
-				annotation->Height = 5;
-				annotation->LineWidth = 1;
-				annotation->ArrowSize = 2;
-				annotation->LineColor = Color::Black;
-
-				annotation->BackColor = Color::Red;
-
-				chartStock->Annotations->Add(annotation);
-			}
-		}
-		*/
 	}
 
+	/// <summary>
+	/// Adds annotations to the price series at the given indexes.
+	/// </summary>
+	/// <param name="indexes">Indexes to annotate</param>
 	private: void AddAnnotations(List<int>^ indexes) {
 
 		for (int i = 0; i < indexes->Count; ++i) {
@@ -600,18 +403,38 @@ namespace Stock_Analysis_v3 {
 			annotation->AnchorDataPoint = point;
 			annotation->AnchorX = point->XValue;
 			annotation->AnchorY = point->YValues[0];
-
 			annotation->ArrowStyle = ArrowStyle::Simple;
 			annotation->Width = .001;
-			annotation->Height = 5;
+			annotation->Height = 4;
 			annotation->LineWidth = 1;
-			annotation->ArrowSize = 2;
+			annotation->ArrowSize = 3;
 			annotation->LineColor = Color::Black;
-
-			annotation->BackColor = Color::Blue;
+			annotation->BackColor = Color::LightBlue;
 
 			chartStock->Annotations->Add(annotation);
 		}
+	}
+
+	/// <summary>
+	/// Adds Recognizers to the list
+	/// </summary>
+	private: void InitializeRecognizers() {
+		recognizers->Add(gcnew Recognizer_AllDoji());
+		recognizers->Add(gcnew Recognizer_NeutralDoji());
+		recognizers->Add(gcnew Recognizer_DragonflyDoji());
+		recognizers->Add(gcnew Recognizer_GravestoneDoji());
+		recognizers->Add(gcnew Recognizer_AllHammers());
+		recognizers->Add(gcnew Recognizer_UprightHammers());
+		recognizers->Add(gcnew Recognizer_InvertedHammers());
+		recognizers->Add(gcnew Recognizer_AllMarubozu());
+		recognizers->Add(gcnew Recognizer_WhiteMarubozu());
+		recognizers->Add(gcnew Recognizer_BlackMarubozu());
+		recognizers->Add(gcnew Recognizer_BullishEngulfing());
+		recognizers->Add(gcnew Recognizer_BearishEngulfing());
+		recognizers->Add(gcnew Recognizer_BullishHarami());
+		recognizers->Add(gcnew Recognizer_BearishHarami());
+		recognizers->Add(gcnew Recognizer_Peak());
+		recognizers->Add(gcnew Recognizer_Valley());
 	}
 
 	private: System::Void comboPatterns_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e) {
@@ -640,7 +463,7 @@ namespace Stock_Analysis_v3 {
 	}
 
 	private: System::Void dtpStart_ValueChanged(System::Object^ sender, System::EventArgs^ e) {
-		DisplayStockData(FilterStockData((currentCandlesticksFromFile)), gInterval);
+		DisplayStockData(FilterStockData((currentCandlesticksFromFile)), interval);
 		if (checkBoxPatterns->Checked) {
 			comboPatterns->Enabled = true;
 			AnnotatePatterns();
@@ -652,7 +475,7 @@ namespace Stock_Analysis_v3 {
 	}
 
 	private: System::Void dtpEnd_ValueChanged(System::Object^ sender, System::EventArgs^ e) {
-		DisplayStockData(FilterStockData((currentCandlesticksFromFile)), gInterval);
+		DisplayStockData(FilterStockData((currentCandlesticksFromFile)), interval);
 		if (checkBoxPatterns->Checked) {
 			comboPatterns->Enabled = true;
 			AnnotatePatterns();

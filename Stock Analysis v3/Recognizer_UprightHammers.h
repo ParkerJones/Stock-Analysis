@@ -14,4 +14,3 @@ public:
 		return subCandlesticks[0]->isHammerUpright();
 	}
 };
-

@@ -156,27 +156,27 @@ namespace Stock_Analysis_v3 {
 		ofd->RestoreDirectory = true;
 		ofd->Multiselect = true;
 
-		// Show OpenFileDialog and 
+		// Show OpenFileDialog and open chart(s)
 		if (ofd->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
 
-			array<array<String^>^>^ tickerDataObjects = gcnew array<array<String^>^>(ofd->FileNames->Length);
-			array<String^>^ intervalObjects = gcnew array<String^>(ofd->FileNames->Length);
-			array<FormChart^>^ chartObjects = gcnew array<FormChart^>(ofd->FileNames->Length);
+			array<array<String^>^>^ stockDataStrings = gcnew array<array<String^>^>(ofd->FileNames->Length);
+			array<String^>^ intervalStrings = gcnew array<String^>(ofd->FileNames->Length);
+			array<FormChart^>^ formChartForms = gcnew array<FormChart^>(ofd->FileNames->Length);
 
 			for (int i = 0; i < ofd->FileNames->Length; ++i) {
 				if (File::Exists(ofd->FileNames[i])) {
 					// Read from selected file
-					tickerDataObjects[i] = File::ReadAllLines(ofd->FileNames[i]);
-					intervalObjects[i] = ofd->FileNames[i]->Split('-')[1];
+					stockDataStrings[i] = File::ReadAllLines(ofd->FileNames[i]);
+					intervalStrings[i] = ofd->FileNames[i]->Split('-')[1];
 					
 					// Display data in chart(s)
 					if (checkBoxDates->Checked) {
-						chartObjects[i] = gcnew FormChart(tickerDataObjects[i], intervalObjects[i], dtpStart->Value, dtpEnd->Value);
-						chartObjects[i]->Show();
+						formChartForms[i] = gcnew FormChart(stockDataStrings[i], intervalStrings[i], dtpStart->Value, dtpEnd->Value);
+						formChartForms[i]->Show();
 					}
 					else {
-						chartObjects[i] = gcnew FormChart(tickerDataObjects[i], intervalObjects[i]);
-						chartObjects[i]->Show();
+						formChartForms[i] = gcnew FormChart(stockDataStrings[i], intervalStrings[i]);
+						formChartForms[i]->Show();
 					}
 					
 				}

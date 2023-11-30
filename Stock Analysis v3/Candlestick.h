@@ -6,12 +6,12 @@
 ref class Candlestick
 {
 public:
-	System::DateTime^ date;
-	double high;
-	double low;
-	double open;
-	double close;
-	long volume;
+	property System::DateTime^ date;
+	property double high;
+	property double low;
+	property double open;
+	property double close;
+	property long volume;
 
 	Candlestick(System::DateTime^ dt, double h, double l, double o, double c, long v) {
 		date = dt;
